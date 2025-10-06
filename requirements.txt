@@ -2,3 +2,8 @@ pandas
 requests
 python-dotenv
 tqdm
+pandas
+numpy
+matplotlib
+seaborn
+notebook
