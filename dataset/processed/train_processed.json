@@ -611,7 +611,7 @@
         "answer_option_1": "A: U, B: U, C: U",
         "answer_option_2": "A: U, B: U, C: D",
         "answer_option_3": "A: D, B: U, C: U",
-        "answer_option_4": NaN,
+        "answer_option_4": "A: D, B: D, C: U",
         "answer_option_5": "Another answer",
         "correct_option_number": 2
     },
@@ -1392,7 +1392,7 @@
         "answer_option_1": "One",
         "answer_option_2": "Two",
         "answer_option_3": "Three",
-        "answer_option_4": NaN,
+        "answer_option_4": "Four",
         "answer_option_5": "Another answer",
         "correct_option_number": 2
     },
