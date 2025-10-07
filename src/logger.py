@@ -25,21 +25,20 @@ def get_console_handler():
 def get_file_handler():
     """Returns a file handler that rotates logs daily."""
     # Rotates log file every day, keeps 7 days of backup logs
-    file_handler = TimedRotatingFileHandler(LOG_FILE, when='midnight', backupCount=7)
+    # --- THIS IS THE FIX ---
+    file_handler = TimedRotatingFileHandler(LOG_FILE, when='midnight', backupCount=7, encoding='utf-8')
     file_handler.setFormatter(FORMATTER)
     return file_handler
 
 def get_logger(logger_name):
     """Configures and returns a logger instance."""
     logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.INFO)  # Set the minimum level of logs to capture
+    logger.setLevel(logging.INFO)
     
-    # Add handlers only if they haven't been added before
     if not logger.handlers:
         logger.addHandler(get_console_handler())
         logger.addHandler(get_file_handler())
         
-    # Propagate messages to the root logger
     logger.propagate = False
     
     return logger
