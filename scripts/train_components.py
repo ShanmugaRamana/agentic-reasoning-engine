@@ -18,6 +18,10 @@ from train.analogy.config import MODEL_OUTPUT_DIR as ANALOGY_DIR, MODEL_NAME as 
 from train.calibrator.train import run_training as run_calibrator_training
 from train.calibrator.config import MODEL_OUTPUT_DIR as CALIBRATOR_DIR, MODEL_NAME as CALIBRATOR_NAME
 
+# Import for the meta-reasoner
+from train.meta_reasoner.train import run_training as run_meta_reasoner_training
+from train.meta_reasoner.config import MODEL_OUTPUT_DIR as META_DIR, MODEL_NAME as META_NAME
+
 
 def train_classifier_if_needed():
     """Checks if the problem classifier model exists and trains it if it doesn't."""
@@ -58,8 +62,23 @@ def train_calibrator_if_needed():
         except Exception as e:
             logger.error(f"❌ An error occurred during confidence calibrator training: {e}")
 
+def train_meta_reasoner_if_needed():
+    """Checks if the meta-reasoner model exists and trains it if it doesn't."""
+    logger.info("--- Checking for existing Meta-Reasoner model ---")
+    model_path = os.path.join(META_DIR, META_NAME)
+    if os.path.exists(model_path):
+        logger.info(f"✅ Model '{META_NAME}' already exists. Skipping training.")
+    else:
+        logger.warning(f"⚠️ Model '{META_NAME}' not found. Starting training process...")
+        try:
+            run_meta_reasoner_training()
+        except Exception as e:
+            logger.error(f"❌ An error occurred during meta-reasoner training: {e}")
+
 
 if __name__ == "__main__":
+    # The order of execution matters due to dependencies
     train_classifier_if_needed()
-    train_calibrator_if_needed() # Must be after classifier
+    train_calibrator_if_needed()
     train_analogy_reasoner_if_needed()
+    train_meta_reasoner_if_needed()

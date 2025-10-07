@@ -4,7 +4,8 @@ from scripts.process_data import run_pipeline
 from scripts.train_components import (
     train_classifier_if_needed, 
     train_analogy_reasoner_if_needed,
-    train_calibrator_if_needed
+    train_calibrator_if_needed,
+    train_meta_reasoner_if_needed
 )
 
 if __name__ == "__main__":
@@ -25,3 +26,6 @@ if __name__ == "__main__":
 
     # Step 4: Train the analogical reasoner (skipped if model exists)
     train_analogy_reasoner_if_needed()
+
+    # Step 5: Train the meta-reasoner (depends on the analogy reasoner)
+    train_meta_reasoner_if_needed()
