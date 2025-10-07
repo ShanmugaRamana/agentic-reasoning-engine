@@ -10,3 +10,5 @@ notebook
 sentence-transformers
 torch
 pydantic
+umap-learn
+plotly
