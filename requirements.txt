@@ -12,3 +12,4 @@ torch
 pydantic
 umap-learn
 plotly
+ollama
