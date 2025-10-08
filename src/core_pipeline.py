@@ -27,7 +27,7 @@ class CorePipeline:
         self._setup_directories()
         
         try:
-            # Load models and components
+            # Load all components
             classifier_model_path = os.path.join(main_config.MODELS_DIR, "problem_classifier.pkl")
             self.classifier = ProblemClassifier(model_path=classifier_model_path)
             self.reasoner = Reasoner()
@@ -45,7 +45,7 @@ class CorePipeline:
         """
         if self.test_data is None or self.test_data.empty or self.classifier is None or self.reasoner is None:
             logger.error("A required component or data is not available. Aborting run.")
-            return
+            return None
 
         logger.info("Starting inference run on test data...")
         
@@ -65,21 +65,27 @@ class CorePipeline:
             
             embedding = self.embedding_model.encode(row['problem_statement'], convert_to_tensor=True)
             
-            # Step 1: Classify the problem topic
+            # 1. Classify Topic
             predicted_topic = self.classifier.predict(row=row, embedding=embedding, row_index=index)
             
-            # Step 2: Route to the appropriate symbolic solver
+            # 2. Get Symbolic Answer
             symbolic_result = self.reasoner.solve_symbolically(row=row, topic=predicted_topic)
-
             if symbolic_result:
-                print(f"output: option number: {symbolic_result['answer']} - confidence: {symbolic_result['confidence']}")
-            else:
-                 print("output: No symbolic answer found.")
+                print(f"-> Symbolic Output: option number: {symbolic_result['answer']} - confidence: {symbolic_result['confidence']}")
             
+            # 3. Get Heuristic (LLM) Answer
+            heuristic_result = self.reasoner.solve_heuristically(row=row, topic=predicted_topic)
+            if heuristic_result:
+                solution_text = textwrap.fill(heuristic_result['solution'], width=70, initial_indent="    ", subsequent_indent="    ")
+                print(f"-> Heuristic Output: option_number: {heuristic_result['answer']}, solution: \n{solution_text}\n     , then confidence: {heuristic_result['confidence']}")
+
             results.append({
                 'predicted_topic': predicted_topic,
                 'symbolic_answer': symbolic_result['answer'] if symbolic_result else None,
-                'symbolic_confidence': symbolic_result['confidence'] if symbolic_result else None
+                'symbolic_confidence': symbolic_result['confidence'] if symbolic_result else None,
+                'heuristic_answer': heuristic_result['answer'] if heuristic_result else None,
+                'heuristic_confidence': heuristic_result['confidence'] if heuristic_result else None,
+                'heuristic_solution': heuristic_result['solution'] if heuristic_result else None
             })
 
         result_df = pd.DataFrame(results)
@@ -88,8 +94,12 @@ class CorePipeline:
         logger.info("Inference run complete.")
         
         print("\n\n" + "="*30 + " FINAL RESULTS PREVIEW " + "="*30)
-        print(self.test_data[['problem_statement', 'predicted_topic', 'symbolic_answer']].head())
+        print(self.test_data[[
+            'problem_statement', 'predicted_topic', 'symbolic_answer', 'heuristic_answer', 'heuristic_solution'
+        ]].head())
         print("="*85)
+        
+        return self.test_data
 
 
     def _display_banner(self):
@@ -107,8 +117,3 @@ class CorePipeline:
         os.makedirs(main_config.OUTPUT_JSON_DIR, exist_ok=True)
         os.makedirs(main_config.OUTPUT_CSV_DIR, exist_ok=True)
         logger.info("Output directories are ready.")
-
-
-if __name__ == '__main__':
-    pipeline = CorePipeline()
-    pipeline.run()

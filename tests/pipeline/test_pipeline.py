@@ -9,6 +9,21 @@ sys.path.append(project_root)
 from src.core_pipeline import CorePipeline
 from src.logger import logger
 
+# A class to redirect output to both console and file
+class Tee:
+    def __init__(self, file, stream):
+        self.file = file
+        self.stream = stream
+
+    def write(self, data):
+        self.file.write(data)
+        self.stream.write(data)
+        self.flush()
+
+    def flush(self):
+        self.file.flush()
+        self.stream.flush()
+
 def test_pipeline_initialization(pipeline: CorePipeline):
     """
     Tests if all components of the CorePipeline are loaded correctly.
@@ -36,7 +51,6 @@ def test_pipeline_run_method(pipeline: CorePipeline):
     """
     logger.info("--- 🧪 Running Test: Pipeline Run Method ---")
     
-    # Execute the main pipeline logic
     pipeline.run()
 
     if 'predicted_topic' not in pipeline.test_data.columns:
@@ -52,28 +66,39 @@ def test_pipeline_run_method(pipeline: CorePipeline):
 
 def run_all_tests():
     """
-    Initializes the pipeline and runs all test functions.
+    Initializes the pipeline and runs all test functions, capturing output.
     """
-    logger.info("=============================================")
-    logger.info("          STARTING PIPELINE TESTS            ")
-    logger.info("=============================================")
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
     
-    try:
-        pipeline = CorePipeline()
+    with open('test.log', 'w', encoding='utf-8') as log_file:
+        tee = Tee(log_file, original_stdout)
+        sys.stdout = tee
+        sys.stderr = tee
         
-        # Run tests in sequence
-        init_ok = test_pipeline_initialization(pipeline)
-        
-        # Only run the second test if the first one passed
-        if init_ok:
-            run_ok = test_pipeline_run_method(pipeline)
-        
-        logger.info("=============================================")
-        logger.info("             TESTING COMPLETE                ")
-        logger.info("=============================================")
-        
-    except Exception as e:
-        logger.error(f"A critical error occurred during testing: {e}", exc_info=True)
+        try:
+            logger.info("=============================================")
+            logger.info("          STARTING PIPELINE TESTS            ")
+            logger.info("=============================================")
+            
+            pipeline = CorePipeline()
+            
+            init_ok = test_pipeline_initialization(pipeline)
+            
+            if init_ok:
+                # --- THIS LINE IS NOW CORRECTED ---
+                test_pipeline_run_method(pipeline)
+            
+            logger.info("=============================================")
+            logger.info("        TESTING COMPLETE - See test.log      ")
+            logger.info("=============================================")
+            
+        except Exception as e:
+            logger.error(f"A critical error occurred during testing: {e}", exc_info=True)
+        finally:
+            sys.stdout = original_stdout
+            sys.stderr = original_stderr
+
 
 if __name__ == "__main__":
     run_all_tests()
